@@ -45,6 +45,8 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 @property (nonatomic) CGPoint currentLocation;
 
 @property (nonatomic, strong) NSMutableArray* menuItems;
+@property (nonatomic, strong) NSMutableArray* titles;
+@property (nonatomic, strong) NSMutableArray* titleItems;
 
 @property (nonatomic) CGFloat radius;
 @property (nonatomic) CGFloat arcAngle;
@@ -74,6 +76,8 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
         [displayLink addToRunLoop:[NSRunLoop mainRunLoop] forMode:NSDefaultRunLoopMode];
         
         _menuItems = [NSMutableArray array];
+        _titleItems = [NSMutableArray array];
+        _titles = [NSMutableArray array];
         _itemLocations = [NSMutableArray array];
         _arcAngle = M_PI_2;
         _radius = 90;
@@ -214,6 +218,25 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
     return layer;
 }
 
+-(CALayer *)layerWithTitle:(NSString *)title {
+    UIFont *font = [UIFont fontWithName:@"HelveticaNeue-Medium" size:14.0f];
+    
+    CGSize boundingSize = [title boundingRectWithSize:CGSizeMake(FLT_MAX, FLT_MAX) options:NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName: font} context:nil].size;
+    CATextLayer *textLayer = [CATextLayer layer];
+    textLayer.zPosition = 10.0f;
+    textLayer.cornerRadius = 3.0f;
+    textLayer.backgroundColor = [UIColor colorWithWhite:0.2 alpha:0.9].CGColor;
+    textLayer.font = (__bridge CFTypeRef)(font.fontName);
+    textLayer.fontSize = font.pointSize;
+    textLayer.frame = CGRectMake(0, 0, boundingSize.width + 10, boundingSize.height + 2);
+    textLayer.alignmentMode = kCAAlignmentCenter;
+    textLayer.foregroundColor = [UIColor whiteColor].CGColor;
+    textLayer.string = title;
+    textLayer.opacity = 0.0;
+    
+    return textLayer;
+}
+
 - (void) setDataSource:(id<GHContextOverlayViewDataSource>)dataSource
 {
     _dataSource = dataSource;
@@ -226,8 +249,11 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 - (void) reloadData
 {
     [self.menuItems makeObjectsPerformSelector:@selector(removeFromSuperlayer)];
+    [self.titleItems makeObjectsPerformSelector:@selector(removeFromSuperlayer)];
     
     [self.menuItems removeAllObjects];
+    [self.titleItems removeAllObjects];
+    [self.titles removeAllObjects];
     [self.itemLocations removeAllObjects];
     
     if (self.dataSource != nil) {
@@ -237,6 +263,7 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
             CALayer *layer = [self layerWithImage:image];
             [self.layer addSublayer:layer];
             [self.menuItems addObject:layer];
+            [self.layer addSublayer:textLayer];
         }
     }
 }
@@ -270,8 +297,36 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
     }
 }
 
+-(CGPoint)normalizeTitleFrameFor:(CGRect)layerFrame relativeTo:(CGPoint)otherPoint {
+    
+    // it needs to be boed into.
+    
+    CGSize size = self.bounds.size;
+    
+    NSLog(@"Converting from point %@, relative to touch: %@", NSStringFromCGPoint(otherPoint), NSStringFromCGPoint(self.longPressLocation));
+    
+    CGRect frame = CGRectZero;
+    frame.size = layerFrame.size;
+    frame.origin = CGPointMake(otherPoint.x - frame.size.width / 2, otherPoint.y - frame.size.height - 10 - GHMenuItemSize / 2);
+    
+    
+    // We want the same x, adjusted...
+    
+    NSLog(@"Frame size: %@", NSStringFromCGSize(frame.size));
+    
+    
+    
+    frame.origin.x = MAX(MIN(size.width - frame.size.width - 5, frame.origin.x), 5);
+    frame.origin.y = MAX(MIN(size.height - frame.size.height - 5, frame.origin.y), 5);
+    
+    return CGPointMake(CGRectGetMidX(frame), CGRectGetMidY(frame));
+    
+    
+}
+
 - (GHMenuItemLocation*) locationForItemAtIndex:(NSUInteger) index
 {
+    
 	CGFloat itemAngle = [self itemAngleAtIndex:index];
 	
 	CGPoint itemCenter = CGPointMake(self.longPressLocation.x + cosf(itemAngle) * self.radius,
@@ -364,7 +419,7 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
             
             if (fabs(distanceFromItem) < toleranceDistance ) {
                 CALayer *layer = [self.menuItems objectAtIndex:closeToIndex];
-                layer.backgroundColor = self.itemBGHighlightedColor;
+                CALayer *textLayer = [self.titleItems objectAtIndex:closeToIndex];
                 layer.backgroundColor = (__bridge CGColorRef)(self.itemBGHighlightedColor);
                 
                 CGFloat distanceFromItemBorder = fabs(distanceFromItem);
@@ -380,6 +435,11 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
                 
                 CATransform3D transLate = CATransform3DTranslate(scaleTransForm, 10*scaleFactor*xtrans, 10*scaleFactor*ytrans, 0);
                 layer.transform = transLate;
+                
+                // We need to work out the text layer transform to position on the screen but above...
+                
+                textLayer.transform = CATransform3DTranslate(CATransform3DIdentity, 0, 15 * ytrans * scaleFactor, 0);
+                textLayer.opacity = 1.0f;
                 
                 if ( ( self.prevIndex >= 0 && self.prevIndex != closeToIndex)) {
                     [self resetPreviousSelection];
@@ -400,10 +460,13 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 {
     if (self.prevIndex >= 0) {
         CALayer *layer = self.menuItems[self.prevIndex];
+        CALayer *textLayer = self.titleItems[self.prevIndex];
         GHMenuItemLocation* itemLocation = [self.itemLocations objectAtIndex:self.prevIndex];
         layer.position = itemLocation.position;
         layer.backgroundColor = (__bridge CGColorRef)self.itemBGColor;
         layer.transform = CATransform3DIdentity;
+        textLayer.transform = CATransform3DIdentity;
+        textLayer.opacity = 0.0f;
         self.prevIndex = -1;
     }
 }
@@ -447,23 +510,29 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
     if([anim valueForKey:GHShowAnimationID]) {
         NSUInteger index = [[anim valueForKey:GHShowAnimationID] unsignedIntegerValue];
         CALayer *layer = self.menuItems[index];
+        CALayer *titleLayer = self.titleItems[index];
         
         GHMenuItemLocation* location = [self.itemLocations objectAtIndex:index];
         CGFloat toAlpha = 1.0;
         
         layer.position = location.position;
+        titleLayer.position = [self normalizeTitleFrameFor:titleLayer.frame relativeTo:location.position];
         layer.opacity = toAlpha;
+        titleLayer.opacity = 0.0f;
         
     }
     else if([anim valueForKey:GHDismissAnimationID]) {
         NSUInteger index = [[anim valueForKey:GHDismissAnimationID] unsignedIntegerValue];
         CALayer *layer = self.menuItems[index];
+        CALayer *titleLayer = self.titleItems[index];
         CGPoint toPosition = self.longPressLocation;
         [CATransaction begin];
         [CATransaction setValue:(id)kCFBooleanTrue forKey:kCATransactionDisableActions];
         layer.position = toPosition;
+        titleLayer.position = [self normalizeTitleFrameFor:titleLayer.frame relativeTo:toPosition];
         layer.backgroundColor = (__bridge CGColorRef)(self.itemBGColor);
         layer.opacity = 0.0f;
+        titleLayer.opacity = 0.0f;
         layer.transform = CATransform3DIdentity;
         [CATransaction commit];
     }
