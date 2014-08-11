@@ -65,11 +65,7 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
     if (self) {
         // Initialization code
         self.userInteractionEnabled = YES;
-//        _longPressRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:self action:@selector(longPressDetected:)];
-//        [self addGestureRecognizer:_longPressRecognizer];
         self.backgroundColor  = [UIColor clearColor];
-
-        // Default the menuActionType to Pan (original/default)
         _menuActionType = GHContextMenuActionTypePan;
 
         displayLink = [CADisplayLink displayLinkWithTarget:self
