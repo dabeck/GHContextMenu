@@ -215,6 +215,7 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 {
     CALayer *layer = [CALayer layer];
     layer.bounds = CGRectMake(0, 0, GHMenuItemSize, GHMenuItemSize);
+    layer.position = CGPointMake(-1000, -1000);
     layer.cornerRadius = GHMenuItemSize/2;
     layer.borderColor = [UIColor whiteColor].CGColor;
     layer.borderWidth = GHBorderWidth;
