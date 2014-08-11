@@ -10,6 +10,10 @@
 
 #define GHShowAnimationID @"GHContextMenuViewRriseAnimationID"
 #define GHDismissAnimationID @"GHContextMenuViewDismissAnimationID"
+#define GHShowAllAnimationID @"GHShowAllAnimationID"
+#define GHHideAllAnimationID @"GHHideAllAnimationID"
+
+#define RAD2DEG(x) ((x) * 180 / M_PI)
 
 NSInteger const GHMainItemSize = 44;
 NSInteger const GHMenuItemSize = 40;
@@ -56,6 +60,8 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 
 @property (nonatomic,retain) id itemBGHighlightedColor;
 @property (nonatomic,retain) id itemBGColor;
+
+@property (nonatomic) CGFloat cachedStartAngle;
 
 @end
 
@@ -126,6 +132,7 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
     }
 
     [self dismissWithSelectedIndexForMenuAtPoint: menuAtPoint];
+
 }
 
 
@@ -147,6 +154,13 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 - (void) longPressDetected:(UIGestureRecognizer*) gestureRecognizer
 {
     if (gestureRecognizer.state == UIGestureRecognizerStateBegan) {
+        
+        // Don't start when we have zero items.
+        if(self.menuItems.count == 0) {
+            return;
+        }
+        
+        
         self.prevIndex = -1;
         
         CGPoint pointInView = [gestureRecognizer locationInView:gestureRecognizer.view];
@@ -263,7 +277,11 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
             CALayer *layer = [self layerWithImage:image];
             [self.layer addSublayer:layer];
             [self.menuItems addObject:layer];
+            NSString *title = [self.dataSource titleForItemAtIndex:i];
+            CALayer *textLayer = [self layerWithTitle:title];
             [self.layer addSublayer:textLayer];
+            [self.titleItems addObject:textLayer];
+            [self.titles addObject:title];
         }
     }
 }
@@ -272,17 +290,12 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 {
     [self.itemLocations removeAllObjects];
     
-    CGSize itemSize = CGSizeMake(GHMenuItemSize, GHMenuItemSize);
-    CGFloat itemRadius = sqrt(pow(itemSize.width, 2) + pow(itemSize.height, 2)) / 2;
-    self.arcAngle = ((itemRadius * self.menuItems.count) / self.radius) * 1.5;
+    self.angleBetweenItems = M_PI / 5;
+    self.arcAngle = MAX(self.menuItems.count - 1, 0) * _angleBetweenItems;
     
-    NSUInteger count = self.menuItems.count;
-	BOOL isFullCircle = (self.arcAngle == M_PI*2);
-	NSUInteger divisor = (isFullCircle) ? count : count - 1;
-
-    self.angleBetweenItems = self.arcAngle/divisor;
+    self.cachedStartAngle = self.currentStartAngle;
     
-    for (int i = 0; i < self.menuItems.count; i++) {
+    for(int i = 0; i < self.menuItems.count; i++) {
         GHMenuItemLocation *location = [self locationForItemAtIndex:i];
         [self.itemLocations addObject:location];
         
@@ -290,8 +303,8 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
         layer.transform = CATransform3DIdentity;
        
         // Rotate menu items based on orientation
-        if (UIDeviceOrientationIsLandscape([UIDevice currentDevice].orientation)) {
-            CGFloat angle = [UIDevice currentDevice].orientation == UIDeviceOrientationLandscapeLeft ? M_PI_2 : -M_PI_2;
+        if (UIDeviceOrientationIsLandscape(UIDevice.currentDevice.orientation)) {
+            CGFloat angle = UIDevice.currentDevice.orientation == UIDeviceOrientationLandscapeLeft ? M_PI_2 : -M_PI_2;
             layer.transform = CATransform3DRotate(CATransform3DIdentity, angle, 0, 0, 1);
         }
     }
@@ -338,13 +351,61 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
     return location;
 }
 
+-(CGFloat)currentStartAngle {
+    CGFloat itemRadius = GHMenuItemSize / 2;
+    
+    // We need to calculate the angle to the wall from each size.
+    
+    CGFloat perItemArc = asinf(itemRadius / 2 / _radius);
+    
+    
+    CGFloat width = self.bounds.size.width;
+    CGPoint currentPoint = self.longPressLocation;
+    
+    CGFloat centerX = width / 2;
+    
+    CGFloat distanceFromEdge;
+    
+    BOOL inverted = NO;
+    
+    if(currentPoint.x < centerX) {
+        // We need to calculate to the left wall.
+        distanceFromEdge = MAX(currentPoint.x, itemRadius);
+        inverted = YES;
+    } else {
+        // We need to calculat to the right wall.
+        distanceFromEdge = MAX(itemRadius, width - currentPoint.x);
+    }
+    
+    CGFloat adjacent = distanceFromEdge - itemRadius;
+    
+    CGFloat angleUnderEdge = acosf(adjacent / _radius);
+    
+    // Now, for the given point, we need to calculate the actual height...
+    
+    CGFloat angleAdjustment = _arcAngle / 2;
+    CGFloat ideal = -angleAdjustment;
+    
+    CGFloat startAngle;
+    
+    if(isnan(angleUnderEdge)) {
+        startAngle = ideal;
+    } else if(inverted) {
+        startAngle = MAX(-M_PI_2 + angleUnderEdge + perItemArc, ideal);
+    } else {
+        startAngle = MIN(M_PI_2 - angleUnderEdge - _arcAngle - perItemArc, ideal);
+    }
+    
+    // Rotate it back 90 degrees, since 0 radians is basically a vector (1, 0)
+    // And we want to treat it as (0, 1).
+    return startAngle - M_PI_2;
+    
+}
+
 - (CGFloat) itemAngleAtIndex:(NSUInteger) index
 {
-    float bearingRadians = [self angleBeweenStartinPoint:self.longPressLocation endingPoint:self.center];
     
-    CGFloat angle =  bearingRadians - self.arcAngle/2;
-    
-	CGFloat itemAngle = angle + (index * self.angleBetweenItems);
+	CGFloat itemAngle = _cachedStartAngle + (index * _angleBetweenItems);
     
     if (itemAngle > 2 *M_PI) {
         itemAngle -= 2*M_PI;
@@ -380,15 +441,6 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
     bearingRadians = (bearingRadians > 0.0 ? bearingRadians : (M_PI*2 + bearingRadians));
 
     return bearingRadians;
-}
-
-- (CGFloat) validaAngle:(CGFloat) angle
-{
-    if (angle > 2*M_PI) {
-        angle = [self validaAngle:angle - 2*M_PI];
-    }
-    
-    return angle;
 }
 
 # pragma mark - animation and selection
@@ -477,10 +529,12 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
         [self layoutMenuItems];
     }
     
-    for (NSUInteger index = 0; index < self.menuItems.count; index++) {
-        CALayer *layer = self.menuItems[index];
     CAMediaTimingFunction *timingFunction = [CAMediaTimingFunction functionWithControlPoints:0.45f :1.2f :0.75f :1.0f];
 
+    CGColorRef visibleColour = [UIColor colorWithWhite:0.1f alpha:.8f].CGColor;
+    CGColorRef hiddenColour  = UIColor.clearColor.CGColor;
+    self.layer.backgroundColor = (isShowing ?  visibleColour : hiddenColour);
+    
     [_menuItems enumerateObjectsUsingBlock:^(CALayer *layer, NSUInteger index, BOOL *stop) {
         layer.opacity = 0;
         CGPoint fromPosition = self.longPressLocation;
@@ -516,6 +570,7 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
         CGFloat toAlpha = 1.0;
         
         layer.position = location.position;
+        NSLog(@"Anchor point: %@", NSStringFromCGPoint(layer.anchorPoint));
         titleLayer.position = [self normalizeTitleFrameFor:titleLayer.frame relativeTo:location.position];
         layer.opacity = toAlpha;
         titleLayer.opacity = 0.0f;
