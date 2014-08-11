@@ -25,6 +25,7 @@ typedef NS_ENUM(NSInteger, GHContextMenuActionType){
 
 @property (nonatomic, assign) GHContextMenuActionType menuActionType;
 
+- (void) reloadData;
 - (void) longPressDetected:(UIGestureRecognizer*) gestureRecognizer;
 
 @end
