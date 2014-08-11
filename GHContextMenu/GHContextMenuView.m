@@ -186,12 +186,15 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 - (void) hideMenu
 {
     if (self.isShowing) {
-        self.layer.backgroundColor = [UIColor clearColor].CGColor;
+        [CATransaction begin];
+        [CATransaction setCompletionBlock:^{
+            [self removeFromSuperview];
+        }];
         self.isShowing = NO;
-        self.isPaning = NO;
+        self.isPanning = NO;
         [self animateMenu:NO];
         [self setNeedsDisplay];
-        [self removeFromSuperview];
+        [CATransaction commit];
     }
 }
 
