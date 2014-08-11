@@ -475,10 +475,8 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
                 
                 CATransform3D transLate = CATransform3DTranslate(scaleTransForm, 10*scaleFactor*xtrans, 10*scaleFactor*ytrans, 0);
                 layer.transform = transLate;
-                
-                // We need to work out the text layer transform to position on the screen but above...
-                
-                textLayer.transform = CATransform3DTranslate(CATransform3DIdentity, 0, 15 * ytrans * scaleFactor, 0);
+
+                textLayer.transform = CATransform3DTranslate(CATransform3DIdentity, 0, 20 * ytrans * scaleFactor, 0);
                 textLayer.opacity = 1.0f;
                 
                 if ( ( self.prevIndex >= 0 && self.prevIndex != closeToIndex)) {
