@@ -13,7 +13,7 @@
 
 NSInteger const GHMainItemSize = 44;
 NSInteger const GHMenuItemSize = 40;
-NSInteger const GHBorderWidth  = 5;
+NSInteger const GHBorderWidth  = 2;
 
 CGFloat const   GHAnimationDuration = 0.2;
 CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
@@ -39,10 +39,10 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 @property (nonatomic, strong) UILongPressGestureRecognizer* longPressRecognizer;
 
 @property (nonatomic, assign) BOOL isShowing;
-@property (nonatomic, assign) BOOL isPaning;
+@property (nonatomic, assign) BOOL isPanning;
 
 @property (nonatomic) CGPoint longPressLocation;
-@property (nonatomic) CGPoint curretnLocation;
+@property (nonatomic) CGPoint currentLocation;
 
 @property (nonatomic, strong) NSMutableArray* menuItems;
 
@@ -52,8 +52,8 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 @property (nonatomic, strong) NSMutableArray* itemLocations;
 @property (nonatomic) NSInteger prevIndex;
 
-@property (nonatomic) CGColorRef itemBGHighlightedColor;
-@property (nonatomic) CGColorRef itemBGColor;
+@property (nonatomic,retain) id itemBGHighlightedColor;
+@property (nonatomic,retain) id itemBGColor;
 
 @end
 
@@ -82,8 +82,8 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
         _arcAngle = M_PI_2;
         _radius = 90;
         
-        self.itemBGColor = [UIColor grayColor].CGColor;
-        self.itemBGHighlightedColor = [UIColor redColor].CGColor;
+        self.itemBGColor = (id)[UIColor colorWithWhite:0.4 alpha:0.5].CGColor;
+        self.itemBGHighlightedColor = (id)[UIColor redColor].CGColor;
         
     }
     return self;
@@ -95,9 +95,8 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 
 -(NSInteger)indexOfClosestMatchAtPoint:(CGPoint)point {
     int i = 0;
-    for( CALayer *menuItemLayer in self.menuItems ) {
+    for(CALayer *menuItemLayer in self.menuItems) {
         if( CGRectContainsPoint( menuItemLayer.frame, point ) ) {
-            NSLog( @"Touched Layer at index: %i", i);
             return i;
         }
         i++;
@@ -137,7 +136,7 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 // Split this out of the longPressDetected so that we can reuse it with touchesBegan (above)
 -(void)dismissWithSelectedIndexForMenuAtPoint:(CGPoint)point {
 
-    if(self.delegate && [self.delegate respondsToSelector:@selector(didSelectItemAtIndex: forMenuAtPoint:)] && self.prevIndex >= 0){
+    if(self.delegate && [self.delegate respondsToSelector:@selector(didSelectItemAtIndex:forMenuAtPoint:)] && self.prevIndex >= 0){
         [self.delegate didSelectItemAtIndex:self.prevIndex forMenuAtPoint:point];
         self.prevIndex = -1;
     }
@@ -167,8 +166,8 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
     
     if (gestureRecognizer.state == UIGestureRecognizerStateChanged) {
         if (self.isShowing && self.menuActionType == GHContextMenuActionTypePan) {
-            self.isPaning = YES;
-            self.curretnLocation =  [gestureRecognizer locationInView:self];
+            self.isPanning = YES;
+            self.currentLocation =  [gestureRecognizer locationInView:self];
         }
     }
     
@@ -205,7 +204,7 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
     layer.borderWidth = GHBorderWidth;
     layer.shadowColor = [UIColor blackColor].CGColor;
     layer.shadowOffset = CGSizeMake(0, -1);
-    layer.backgroundColor = self.itemBGColor;
+    layer.backgroundColor = (__bridge CGColorRef)self.itemBGColor;
     
     CALayer* imageLayer = [CALayer layer];
     imageLayer.contents = (id) image.CGImage;
@@ -227,6 +226,8 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 
 - (void) reloadData
 {
+    [self.menuItems makeObjectsPerformSelector:@selector(removeFromSuperlayer)];
+    
     [self.menuItems removeAllObjects];
     [self.itemLocations removeAllObjects];
     
@@ -340,9 +341,9 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 
 -  (void) highlightMenuItemForPoint
 {
-    if (self.isShowing && self.isPaning) {
+    if (self.isShowing && self.isPanning) {
         
-        CGFloat angle = [self angleBeweenStartinPoint:self.longPressLocation endingPoint:self.curretnLocation];
+        CGFloat angle = [self angleBeweenStartinPoint:self.longPressLocation endingPoint:self.currentLocation];
         NSInteger closeToIndex = -1;
         for (int i = 0; i < self.menuItems.count; i++) {
             GHMenuItemLocation* itemLocation = [self.itemLocations objectAtIndex:i];
@@ -356,7 +357,7 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
             
             GHMenuItemLocation* itemLocation = [self.itemLocations objectAtIndex:closeToIndex];
 
-            CGFloat distanceFromCenter = sqrt(pow(self.curretnLocation.x - self.longPressLocation.x, 2)+ pow(self.curretnLocation.y-self.longPressLocation.y, 2));
+            CGFloat distanceFromCenter = sqrt(pow(self.currentLocation.x - self.longPressLocation.x, 2)+ pow(self.currentLocation.y-self.longPressLocation.y, 2));
             
             CGFloat toleranceDistance = (self.radius - GHMainItemSize/(2*sqrt(2)) - GHMenuItemSize/(2*sqrt(2)) )/2;
             
@@ -365,14 +366,12 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
             if (fabs(distanceFromItem) < toleranceDistance ) {
                 CALayer *layer = [self.menuItems objectAtIndex:closeToIndex];
                 layer.backgroundColor = self.itemBGHighlightedColor;
+                layer.backgroundColor = (__bridge CGColorRef)(self.itemBGHighlightedColor);
                 
                 CGFloat distanceFromItemBorder = fabs(distanceFromItem);
                 
-                CGFloat scaleFactor = 1 + 0.5 *(1-distanceFromItemBorder/toleranceDistance) ;
-                
-                if (scaleFactor < 1.0) {
-                    scaleFactor = 1.0;
-                }
+                CGFloat scaleFactor = 1 + 0.5 * (1 - distanceFromItemBorder / toleranceDistance);
+                scaleFactor = MAX(scaleFactor, 1.0);
                 
                 // Scale
                 CATransform3D scaleTransForm =  CATransform3DScale(CATransform3DIdentity, scaleFactor, scaleFactor, 1.0);
@@ -404,7 +403,7 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
         CALayer *layer = self.menuItems[self.prevIndex];
         GHMenuItemLocation* itemLocation = [self.itemLocations objectAtIndex:self.prevIndex];
         layer.position = itemLocation.position;
-        layer.backgroundColor = self.itemBGColor;
+        layer.backgroundColor = (__bridge CGColorRef)self.itemBGColor;
         layer.transform = CATransform3DIdentity;
         self.prevIndex = -1;
     }
@@ -418,6 +417,9 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
     
     for (NSUInteger index = 0; index < self.menuItems.count; index++) {
         CALayer *layer = self.menuItems[index];
+    CAMediaTimingFunction *timingFunction = [CAMediaTimingFunction functionWithControlPoints:0.45f :1.2f :0.75f :1.0f];
+
+    [_menuItems enumerateObjectsUsingBlock:^(CALayer *layer, NSUInteger index, BOOL *stop) {
         layer.opacity = 0;
         CGPoint fromPosition = self.longPressLocation;
         
@@ -431,14 +433,14 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
         positionAnimation = [CABasicAnimation animationWithKeyPath:@"position"];
         positionAnimation.fromValue = [NSValue valueWithCGPoint:isShowing ? fromPosition : toPosition];
         positionAnimation.toValue = [NSValue valueWithCGPoint:isShowing ? toPosition : fromPosition];
-        positionAnimation.timingFunction = [CAMediaTimingFunction functionWithControlPoints:0.45f :1.2f :0.75f :1.0f];
+        positionAnimation.timingFunction = timingFunction;
         positionAnimation.duration = GHAnimationDuration;
         positionAnimation.beginTime = [layer convertTime:CACurrentMediaTime() fromLayer:nil] + delayInSeconds;
         [positionAnimation setValue:[NSNumber numberWithUnsignedInteger:index] forKey:isShowing ? GHShowAnimationID : GHDismissAnimationID];
         positionAnimation.delegate = self;
         
         [layer addAnimation:positionAnimation forKey:@"riseAnimation"];
-    }
+    }];
 }
 
 - (void)animationDidStart:(CAAnimation *)anim
@@ -461,7 +463,7 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
         [CATransaction begin];
         [CATransaction setValue:(id)kCFBooleanTrue forKey:kCATransactionDisableActions];
         layer.position = toPosition;
-        layer.backgroundColor = self.itemBGColor;
+        layer.backgroundColor = (__bridge CGColorRef)(self.itemBGColor);
         layer.opacity = 0.0f;
         layer.transform = CATransform3DIdentity;
         [CATransaction commit];
