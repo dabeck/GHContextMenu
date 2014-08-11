@@ -34,7 +34,8 @@ typedef NS_ENUM(NSInteger, GHContextMenuActionType){
 
 @required
 - (NSInteger) numberOfMenuItems;
-- (UIImage*) imageForItemAtIndex:(NSInteger) index;
+- (UIImage *) imageForItemAtIndex:(NSInteger) index;
+- (NSString *) titleForItemAtIndex:(NSInteger) index;
 
 @optional
 -(BOOL) shouldShowMenuAtPoint:(CGPoint) point;
