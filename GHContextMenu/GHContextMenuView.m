@@ -312,23 +312,11 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 
 -(CGPoint)normalizeTitleFrameFor:(CGRect)layerFrame relativeTo:(CGPoint)otherPoint {
     
-    // it needs to be boed into.
-    
     CGSize size = self.bounds.size;
-    
-    NSLog(@"Converting from point %@, relative to touch: %@", NSStringFromCGPoint(otherPoint), NSStringFromCGPoint(self.longPressLocation));
     
     CGRect frame = CGRectZero;
     frame.size = layerFrame.size;
     frame.origin = CGPointMake(otherPoint.x - frame.size.width / 2, otherPoint.y - frame.size.height - 10 - GHMenuItemSize / 2);
-    
-    
-    // We want the same x, adjusted...
-    
-    NSLog(@"Frame size: %@", NSStringFromCGSize(frame.size));
-    
-    
-    
     frame.origin.x = MAX(MIN(size.width - frame.size.width - 5, frame.origin.x), 5);
     frame.origin.y = MAX(MIN(size.height - frame.size.height - 5, frame.origin.y), 5);
     
@@ -570,7 +558,6 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
         CGFloat toAlpha = 1.0;
         
         layer.position = location.position;
-        NSLog(@"Anchor point: %@", NSStringFromCGPoint(layer.anchorPoint));
         titleLayer.position = [self normalizeTitleFrameFor:titleLayer.frame relativeTo:location.position];
         layer.opacity = toAlpha;
         titleLayer.opacity = 0.0f;
