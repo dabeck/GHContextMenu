@@ -156,12 +156,7 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
         
         [[UIApplication sharedApplication].keyWindow addSubview:self];
         self.longPressLocation = [gestureRecognizer locationInView:self];
-        
-        self.frame = [[UIScreen mainScreen] applicationFrame];
-        self.layer.backgroundColor = [UIColor colorWithWhite:0.1f alpha:.8f].CGColor;
-        self.isShowing = YES;
-        [self animateMenu:YES];
-        [self setNeedsDisplay];
+        [self showMenu];
     }
     
     if (gestureRecognizer.state == UIGestureRecognizerStateChanged) {
@@ -181,6 +176,10 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 - (void) showMenu
 {
     
+    self.frame = [[UIScreen mainScreen] applicationFrame];
+    self.isShowing = YES;
+    [self animateMenu:YES];
+    [self setNeedsDisplay];
 }
 
 - (void) hideMenu
