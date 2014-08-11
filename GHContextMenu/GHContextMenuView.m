@@ -210,6 +210,7 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
     layer.backgroundColor = (__bridge CGColorRef)self.itemBGColor;
     
     CALayer* imageLayer = [CALayer layer];
+    [imageLayer setContentsGravity:kCAGravityResizeAspect];
     imageLayer.contents = (id) image.CGImage;
     imageLayer.bounds = CGRectMake(0, 0, GHMenuItemSize*2/3, GHMenuItemSize*2/3);
     imageLayer.position = CGPointMake(GHMenuItemSize/2, GHMenuItemSize/2);
