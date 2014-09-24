@@ -248,6 +248,7 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
     textLayer.foregroundColor = [UIColor whiteColor].CGColor;
     textLayer.string = title;
     textLayer.opacity = 0.0;
+    textLayer.contentsScale = UIScreen.mainScreen.scale;
     
     return textLayer;
 }
