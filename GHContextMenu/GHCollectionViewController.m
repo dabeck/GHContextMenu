@@ -110,6 +110,32 @@
     return [UIImage imageNamed:imageName];
 }
 
+- (NSString*)titleForItemAtIndex:(NSInteger)index
+{
+    NSString* title = @"";
+    switch (index) {
+        case 0:
+            title = @"Facebook";
+            break;
+        case 1:
+            title = @"Twitter";
+            break;
+        case 2:
+            title = @"Google+";
+            break;
+        case 3:
+            title = @"LinkedIn";
+            break;
+        case 4:
+            title = @"Pinterest";
+            break;
+            
+        default:
+            break;
+    }
+    return title;
+}
+
 - (void) didSelectItemAtIndex:(NSInteger)selectedIndex forMenuAtPoint:(CGPoint)point
 {
     NSIndexPath* indexPath = [self.collectionView indexPathForItemAtPoint:point];
