@@ -4,6 +4,7 @@
 //
 //  Created by Tapasya on 27/01/14.
 //  Copyright (c) 2014 Tapasya. All rights reserved.
+//  Updated by Levi Nunnink on 2015
 //
 
 #import "GHContextMenuView.h"
@@ -99,7 +100,8 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 #pragma mark Layer Touch Tracking
 #pragma mark -
 
--(NSInteger)indexOfClosestMatchAtPoint:(CGPoint)point {
+-(NSInteger)indexOfClosestMatchAtPoint:(CGPoint)point
+{
     int i = 0;
     for(CALayer *menuItemLayer in self.menuItems) {
         if( CGRectContainsPoint( menuItemLayer.frame, point ) ) {
@@ -111,7 +113,8 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 }
 
 
--(void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event {
+-(void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
+{
 
     CGPoint menuAtPoint = CGPointZero;
 
@@ -141,7 +144,8 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 #pragma mark -
 
 // Split this out of the longPressDetected so that we can reuse it with touchesBegan (above)
--(void)dismissWithSelectedIndexForMenuAtPoint:(CGPoint)point {
+-(void)dismissWithSelectedIndexForMenuAtPoint:(CGPoint)point
+{
     
     if(self.delegate && [self.delegate respondsToSelector:@selector(didSelectItemAtIndex:forMenuAtPoint:)] && self.prevIndex >= 0){
         [self.delegate didSelectItemAtIndex:self.prevIndex forMenuAtPoint:point];
@@ -189,7 +193,6 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 
 - (void) showMenu
 {
-    
     self.frame = [[UIScreen mainScreen] applicationFrame];
     self.isShowing = YES;
     [self animateMenu:YES];
@@ -233,7 +236,8 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
     return layer;
 }
 
--(CALayer *)layerWithTitle:(NSString *)title {
+-(CALayer *)layerWithTitle:(NSString *)title
+{
     UIFont *font = [UIFont fontWithName:@"HelveticaNeue-Medium" size:14.0f];
     
     CGSize boundingSize = [title boundingRectWithSize:CGSizeMake(FLT_MAX, FLT_MAX) options:NSStringDrawingUsesLineFragmentOrigin attributes:@{NSFontAttributeName: font} context:nil].size;
@@ -303,7 +307,8 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
     }
 }
 
--(CGPoint)normalizeTitleFrameFor:(CGRect)layerFrame relativeTo:(CGPoint)otherPoint {
+-(CGPoint)normalizeTitleFrameFor:(CGRect)layerFrame relativeTo:(CGPoint)otherPoint
+{
     
     CGSize size = self.bounds.size;
     
@@ -314,8 +319,6 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
     frame.origin.y = MAX(MIN(size.height - frame.size.height - 5, frame.origin.y), 5);
     
     return CGPointMake(CGRectGetMidX(frame), CGRectGetMidY(frame));
-    
-    
 }
 
 - (GHMenuItemLocation*) locationForItemAtIndex:(NSUInteger) index
@@ -332,7 +335,8 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
     return location;
 }
 
--(CGFloat)currentStartAngle {
+-(CGFloat)currentStartAngle
+{
     CGFloat itemRadius = GHMenuItemSize / 2;
     
     // We need to calculate the angle to the wall from each size.
@@ -380,7 +384,6 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
     // Rotate it back 90 degrees, since 0 radians is basically a vector (1, 0)
     // And we want to treat it as (0, 1).
     return startAngle - M_PI_2;
-    
 }
 
 - (CGFloat) itemAngleAtIndex:(NSUInteger) index
@@ -590,4 +593,5 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
         [self drawCircle:self.longPressLocation];
     }
 }
+
 @end
