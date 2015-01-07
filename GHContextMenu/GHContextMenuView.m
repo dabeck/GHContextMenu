@@ -142,7 +142,7 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 
 // Split this out of the longPressDetected so that we can reuse it with touchesBegan (above)
 -(void)dismissWithSelectedIndexForMenuAtPoint:(CGPoint)point {
-
+    
     if(self.delegate && [self.delegate respondsToSelector:@selector(didSelectItemAtIndex:forMenuAtPoint:)] && self.prevIndex >= 0){
         [self.delegate didSelectItemAtIndex:self.prevIndex forMenuAtPoint:point];
         self.prevIndex = -1;
@@ -174,14 +174,14 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
     }
     
     if (gestureRecognizer.state == UIGestureRecognizerStateChanged) {
-        if (self.isShowing && self.menuActionType == GHContextMenuActionTypePan) {
+        if (self.isShowing && (self.menuActionType == GHContextMenuActionTypePan || self.menuActionType == GHContextmenuActionTypePanAndTap)) {
             self.isPanning = YES;
             self.currentLocation =  [gestureRecognizer locationInView:self];
         }
     }
     
     // Only trigger if we're using the GHContextMenuActionTypePan (default)
-    if( gestureRecognizer.state == UIGestureRecognizerStateEnded && self.menuActionType == GHContextMenuActionTypePan ) {
+    if((gestureRecognizer.state == UIGestureRecognizerStateEnded && self.menuActionType == GHContextMenuActionTypePan) || (gestureRecognizer.state == UIGestureRecognizerStateEnded && self.menuActionType == GHContextmenuActionTypePanAndTap && self.prevIndex >= 0)) {
         CGPoint menuAtPoint = [self convertPoint:self.longPressLocation toView:gestureRecognizer.view];
         [self dismissWithSelectedIndexForMenuAtPoint:menuAtPoint];
     }

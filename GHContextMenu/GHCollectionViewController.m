@@ -31,7 +31,7 @@
     GHContextMenuView* overlay = [[GHContextMenuView alloc] init];
     overlay.dataSource = self;
     overlay.delegate = self;
-
+    overlay.menuActionType = GHContextmenuActionTypePanAndTap;
 	// Do any additional setup after loading the view.
 //    [self.collectionView registerClass:[UICollectionViewCell class] forCellWithReuseIdentifier:@"cell"];
     UILongPressGestureRecognizer* _longPressRecognizer = [[UILongPressGestureRecognizer alloc] initWithTarget:overlay action:@selector(longPressDetected:)];

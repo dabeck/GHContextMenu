@@ -12,7 +12,9 @@ typedef NS_ENUM(NSInteger, GHContextMenuActionType){
     // Default
     GHContextMenuActionTypePan,
     // Allows tap action in order to trigger an action
-    GHContextMenuActionTypeTap
+    GHContextMenuActionTypeTap,
+    //Allows for both
+    GHContextmenuActionTypePanAndTap
 };
 
 @protocol GHContextOverlayViewDataSource;
