@@ -15,6 +15,7 @@
 #define GHHideAllAnimationID @"GHHideAllAnimationID"
 
 #define RAD2DEG(x) ((x) * 180 / M_PI)
+#define DEGREES_TO_RADIANS(x) (M_PI * (x) / 180.0)
 
 NSInteger const GHMainItemSize = 44;
 NSInteger const GHMenuItemSize = 40;
@@ -135,7 +136,6 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
     }
 
     [self dismissWithSelectedIndexForMenuAtPoint: menuAtPoint];
-
 }
 
 
@@ -300,6 +300,7 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
     self.arcAngle = MAX(self.menuItems.count - 1, 0) * _angleBetweenItems;
     
     self.cachedStartAngle = self.currentStartAngle;
+    NSLog(@"START ANGLE: %0.9f", self.cachedStartAngle);
     
     for(int i = 0; i < self.menuItems.count; i++) {
         GHMenuItemLocation *location = [self locationForItemAtIndex:i];
@@ -325,9 +326,9 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 {
     
 	CGFloat itemAngle = [self itemAngleAtIndex:index];
-	
 	CGPoint itemCenter = CGPointMake(self.longPressLocation.x + cosf(itemAngle) * self.radius,
 									 self.longPressLocation.y + sinf(itemAngle) * self.radius);
+    
     GHMenuItemLocation *location = [GHMenuItemLocation new];
     location.position = itemCenter;
     location.angle = itemAngle;
@@ -342,8 +343,6 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
     // We need to calculate the angle to the wall from each size.
     
     CGFloat perItemArc = asinf(itemRadius / 2 / _radius);
-    
-    
     CGFloat width = self.bounds.size.width;
     CGPoint currentPoint = self.longPressLocation;
     
@@ -375,10 +374,22 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
     
     if(isnan(angleUnderEdge)) {
         startAngle = ideal;
+        // If our menu is going to go over the top bounds of our app, we need to flip the start angle
+        if (currentPoint.y - [self calculateRadius] <= 0) {
+            startAngle += DEGREES_TO_RADIANS(180);            
+        }
     } else if(inverted) {
         startAngle = MAX(-M_PI_2 + angleUnderEdge + perItemArc, ideal);
+        // If our menu is going to go over the top bounds of our app, we need to rotate the start angle
+        if (currentPoint.y - [self calculateRadius] <= 0) {
+            startAngle += DEGREES_TO_RADIANS(90);
+        }
     } else {
         startAngle = MIN(M_PI_2 - angleUnderEdge - _arcAngle - perItemArc, ideal);
+        // If our menu is going to go over the top bounds of our app, we need to rotate the start angle
+        if (currentPoint.y - [self calculateRadius] <= 0) {
+            startAngle += DEGREES_TO_RADIANS(-90);
+        }
     }
     
     // Rotate it back 90 degrees, since 0 radians is basically a vector (1, 0)
