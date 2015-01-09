@@ -17,6 +17,13 @@ typedef NS_ENUM(NSInteger, GHContextMenuActionType){
     GHContextmenuActionTypePanAndTap
 };
 
+typedef NS_ENUM(NSInteger, GHContextMenuAnchor){
+    // Default
+    GHContextMenuAnchorTouch,
+    // Anchors the menu to the center of the containing view instead of the touch
+    GHContextMenuAnchorContainingView,
+};
+
 @protocol GHContextOverlayViewDataSource;
 @protocol GHContextOverlayViewDelegate;
 
@@ -26,6 +33,7 @@ typedef NS_ENUM(NSInteger, GHContextMenuActionType){
 @property (nonatomic, weak) id<GHContextOverlayViewDelegate> delegate;
 
 @property (nonatomic, assign) GHContextMenuActionType menuActionType;
+@property (nonatomic, assign) GHContextMenuAnchor menuAnchor;
 
 - (void) reloadData;
 - (void) longPressDetected:(UIGestureRecognizer*) gestureRecognizer;

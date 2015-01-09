@@ -167,13 +167,26 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
         
         self.prevIndex = -1;
         
-        CGPoint pointInView = [gestureRecognizer locationInView:gestureRecognizer.view];
+        CGPoint pointInView;
+        
+        // If the menu should be anchored to the center of the view, do so
+        if (self.menuAnchor == GHContextMenuAnchorContainingView) {
+            pointInView = gestureRecognizer.view.center;
+        } else {
+            // Otherwise anchor it to the touch by default
+            pointInView = [gestureRecognizer locationInView:gestureRecognizer.view];
+        }
+        
         if (self.dataSource != nil && [self.dataSource respondsToSelector:@selector(menuView:shouldShowMenuAtPoint:)] && ![self.dataSource menuView:self shouldShowMenuAtPoint:pointInView]){
             return;
         }
         
         [[UIApplication sharedApplication].keyWindow addSubview:self];
-        self.longPressLocation = [gestureRecognizer locationInView:self];
+        if (self.menuAnchor == GHContextMenuAnchorContainingView) {
+            self.longPressLocation = CGPointMake(gestureRecognizer.view.x + (gestureRecognizer.view.width / 2), gestureRecognizer.view.y + gestureRecognizer.view.layer.borderWidth);
+        } else {
+            self.longPressLocation = [gestureRecognizer locationInView:self];
+        }
         [self showMenu];
     }
     
