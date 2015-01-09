@@ -147,8 +147,8 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 -(void)dismissWithSelectedIndexForMenuAtPoint:(CGPoint)point
 {
     
-    if(self.delegate && [self.delegate respondsToSelector:@selector(didSelectItemAtIndex:forMenuAtPoint:)] && self.prevIndex >= 0){
-        [self.delegate didSelectItemAtIndex:self.prevIndex forMenuAtPoint:point];
+    if(self.delegate && [self.delegate respondsToSelector:@selector(menuView:didSelectItemAtIndex:forMenuAtPoint:)] && self.prevIndex >= 0){
+        [self.delegate menuView:self didSelectItemAtIndex:self.prevIndex forMenuAtPoint:point];
         self.prevIndex = -1;
     }
 
@@ -168,7 +168,7 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
         self.prevIndex = -1;
         
         CGPoint pointInView = [gestureRecognizer locationInView:gestureRecognizer.view];
-        if (self.dataSource != nil && [self.dataSource respondsToSelector:@selector(shouldShowMenuAtPoint:)] && ![self.dataSource shouldShowMenuAtPoint:pointInView]){
+        if (self.dataSource != nil && [self.dataSource respondsToSelector:@selector(menuView:shouldShowMenuAtPoint:)] && ![self.dataSource menuView:self shouldShowMenuAtPoint:pointInView]){
             return;
         }
         
@@ -277,13 +277,13 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
     [self.itemLocations removeAllObjects];
     
     if (self.dataSource != nil) {
-        NSInteger count = [self.dataSource numberOfMenuItems];
+        NSInteger count = [self.dataSource numberOfMenuItemsForMenuView:self];
         for (int i = 0; i < count; i++) {
-            UIImage* image = [self.dataSource imageForItemAtIndex:i];
+            UIImage* image = [self.dataSource menuView:self imageForItemAtIndex:i];
             CALayer *layer = [self layerWithImage:image];
             [self.layer addSublayer:layer];
             [self.menuItems addObject:layer];
-            NSString *title = [self.dataSource titleForItemAtIndex:i];
+            NSString *title = [self.dataSource menuView:self titleForItemAtIndex:i];
             CALayer *textLayer = [self layerWithTitle:title];
             [self.layer addSublayer:textLayer];
             [self.titleItems addObject:textLayer];

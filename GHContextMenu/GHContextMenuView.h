@@ -35,17 +35,17 @@ typedef NS_ENUM(NSInteger, GHContextMenuActionType){
 @protocol GHContextOverlayViewDataSource <NSObject>
 
 @required
-- (NSInteger) numberOfMenuItems;
-- (UIImage *) imageForItemAtIndex:(NSInteger) index;
-- (NSString *) titleForItemAtIndex:(NSInteger) index;
+- (NSInteger) numberOfMenuItemsForMenuView:(GHContextMenuView*)menuView;
+- (UIImage *) menuView:(GHContextMenuView*)menuView imageForItemAtIndex:(NSInteger) index;
+- (NSString *) menuView:(GHContextMenuView*)menuView titleForItemAtIndex:(NSInteger) index;
 
 @optional
--(BOOL) shouldShowMenuAtPoint:(CGPoint) point;
+-(BOOL) menuView:(GHContextMenuView*)menuView shouldShowMenuAtPoint:(CGPoint) point;
 
 @end
 
 @protocol GHContextOverlayViewDelegate <NSObject>
 
-- (void) didSelectItemAtIndex:(NSInteger) selectedIndex forMenuAtPoint:(CGPoint) point;
+- (void) menuView:(GHContextMenuView*)menuView didSelectItemAtIndex:(NSInteger)selectedIndex forMenuAtPoint:(CGPoint) point;
 
 @end
