@@ -183,7 +183,7 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
         
         [[UIApplication sharedApplication].keyWindow addSubview:self];
         if (self.menuAnchor == GHContextMenuAnchorContainingView) {
-            self.longPressLocation = CGPointMake(gestureRecognizer.view.x + (gestureRecognizer.view.width / 2), gestureRecognizer.view.y + gestureRecognizer.view.layer.borderWidth);
+			self.longPressLocation = CGPointMake(gestureRecognizer.view.frame.origin.x + (gestureRecognizer.view.frame.size.width / 2), gestureRecognizer.view.frame.origin.y + gestureRecognizer.view.layer.borderWidth);
         } else {
             self.longPressLocation = [gestureRecognizer locationInView:self];
         }
