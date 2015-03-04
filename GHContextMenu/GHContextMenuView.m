@@ -206,7 +206,7 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 
 - (void) showMenu
 {
-    self.frame = [[UIScreen mainScreen] applicationFrame];
+    self.frame = [UIScreen mainScreen].bounds;
     self.isShowing = YES;
     [self animateMenu:YES];
     [self setNeedsDisplay];
