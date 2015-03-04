@@ -296,11 +296,13 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
             CALayer *layer = [self layerWithImage:image];
             [self.layer addSublayer:layer];
             [self.menuItems addObject:layer];
-            NSString *title = [self.dataSource menuView:self titleForItemAtIndex:i];
-            CALayer *textLayer = [self layerWithTitle:title];
-            [self.layer addSublayer:textLayer];
-            [self.titleItems addObject:textLayer];
-            [self.titles addObject:title];
+			if ([self.dataSource respondsToSelector:@selector(menuView:titleForItemAtIndex:)]) {
+				NSString *title = [self.dataSource menuView:self titleForItemAtIndex:i];
+				CALayer *textLayer = [self layerWithTitle:title];
+				[self.layer addSublayer:textLayer];
+				[self.titleItems addObject:textLayer];
+				[self.titles addObject:title];
+			}
         }
     }
 }
@@ -479,7 +481,10 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
             
             if (fabs(distanceFromItem) < toleranceDistance ) {
                 CALayer *layer = [self.menuItems objectAtIndex:closeToIndex];
-                CALayer *textLayer = [self.titleItems objectAtIndex:closeToIndex];
+				CALayer *textLayer;
+				if (self.titleItems.count) {
+					 textLayer = [self.titleItems objectAtIndex:closeToIndex];
+				}
                 layer.backgroundColor = (__bridge CGColorRef)(self.itemBGHighlightedColor);
                 
                 CGFloat distanceFromItemBorder = fabs(distanceFromItem);
@@ -496,9 +501,12 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
                 CATransform3D transLate = CATransform3DTranslate(scaleTransForm, 10*scaleFactor*xtrans, 10*scaleFactor*ytrans, 0);
                 layer.transform = transLate;
 
-                textLayer.transform = CATransform3DTranslate(CATransform3DIdentity, 0, 20 * ytrans * scaleFactor, 0);
-                textLayer.opacity = 1.0f;
-                
+				if (self.titleItems.count) {
+					textLayer.transform = CATransform3DTranslate(CATransform3DIdentity, 0, 20 * ytrans * scaleFactor, 0);
+					textLayer.opacity = 1.0f;
+				}
+				
+				
                 if ( ( self.prevIndex >= 0 && self.prevIndex != closeToIndex)) {
                     [self resetPreviousSelection];
                 }
@@ -518,13 +526,19 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 {
     if (self.prevIndex >= 0) {
         CALayer *layer = self.menuItems[self.prevIndex];
-        CALayer *textLayer = self.titleItems[self.prevIndex];
+		CALayer *textLayer;
+		
+		if (self.titleItems.count) {
+			textLayer = self.titleItems[self.prevIndex];
+		}
         GHMenuItemLocation* itemLocation = [self.itemLocations objectAtIndex:self.prevIndex];
         layer.position = itemLocation.position;
         layer.backgroundColor = (__bridge CGColorRef)self.itemBGColor;
         layer.transform = CATransform3DIdentity;
-        textLayer.transform = CATransform3DIdentity;
-        textLayer.opacity = 0.0f;
+		if (self.titleItems.count) {
+			textLayer.transform = CATransform3DIdentity;
+			textLayer.opacity = 0.0f;
+		}
         self.prevIndex = -1;
     }
 }
@@ -570,29 +584,43 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
     if([anim valueForKey:GHShowAnimationID]) {
         NSUInteger index = [[anim valueForKey:GHShowAnimationID] unsignedIntegerValue];
         CALayer *layer = self.menuItems[index];
-        CALayer *titleLayer = self.titleItems[index];
+		CALayer *titleLayer;
+		if (self.titleItems.count) {
+			titleLayer = self.titleItems[index];
+		}
+		
         
         GHMenuItemLocation* location = [self.itemLocations objectAtIndex:index];
         CGFloat toAlpha = 1.0;
         
         layer.position = location.position;
-        titleLayer.position = [self normalizeTitleFrameFor:titleLayer.frame relativeTo:location.position];
-        layer.opacity = toAlpha;
-        titleLayer.opacity = 0.0f;
-        
+		layer.opacity = toAlpha;
+
+		if (self.titleItems.count) {
+			titleLayer.position = [self normalizeTitleFrameFor:titleLayer.frame relativeTo:location.position];
+			titleLayer.opacity = 0.0f;
+		}
+		
     }
     else if([anim valueForKey:GHDismissAnimationID]) {
         NSUInteger index = [[anim valueForKey:GHDismissAnimationID] unsignedIntegerValue];
         CALayer *layer = self.menuItems[index];
-        CALayer *titleLayer = self.titleItems[index];
+		CALayer *titleLayer;
+		if (self.titleItems.count) {
+			titleLayer = self.titleItems[index];
+		}
+
         CGPoint toPosition = self.longPressLocation;
         [CATransaction begin];
         [CATransaction setValue:(id)kCFBooleanTrue forKey:kCATransactionDisableActions];
         layer.position = toPosition;
-        titleLayer.position = [self normalizeTitleFrameFor:titleLayer.frame relativeTo:toPosition];
+		if (self.titleItems.count) {
+			titleLayer.position = [self normalizeTitleFrameFor:titleLayer.frame relativeTo:toPosition];
+			titleLayer.opacity = 0.0f;
+		}
+		
         layer.backgroundColor = (__bridge CGColorRef)(self.itemBGColor);
         layer.opacity = 0.0f;
-        titleLayer.opacity = 0.0f;
         layer.transform = CATransform3DIdentity;
         [CATransaction commit];
     }

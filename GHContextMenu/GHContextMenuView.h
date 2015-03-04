@@ -45,9 +45,9 @@ typedef NS_ENUM(NSInteger, GHContextMenuAnchor){
 @required
 - (NSInteger) numberOfMenuItemsForMenuView:(GHContextMenuView*)menuView;
 - (UIImage *) menuView:(GHContextMenuView*)menuView imageForItemAtIndex:(NSInteger) index;
-- (NSString *) menuView:(GHContextMenuView*)menuView titleForItemAtIndex:(NSInteger) index;
 
 @optional
+- (NSString *) menuView:(GHContextMenuView*)menuView titleForItemAtIndex:(NSInteger) index;
 -(BOOL) menuView:(GHContextMenuView*)menuView shouldShowMenuAtPoint:(CGPoint) point;
 
 @end
