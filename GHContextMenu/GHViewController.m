@@ -37,12 +37,12 @@
     // Dispose of any resources that can be recreated.
 }
 
-- (NSInteger) numberOfMenuItems
+- (NSInteger)numberOfMenuItemsForMenuView:(GHContextMenuView *)menuView
 {
     return 3;
 }
 
--(UIImage*) imageForItemAtIndex:(NSInteger)index
+- (UIImage *)menuView:(GHContextMenuView *)menuView imageForItemAtIndex:(NSInteger)index
 {
     NSString* imageName = nil;
     switch (index) {
@@ -68,7 +68,7 @@
     return [UIImage imageNamed:imageName];
 }
 
-- (void) didSelectItemAtIndex:(NSInteger)selectedIndex forMenuAtPoint:(CGPoint)point
+- (void)menuView:(GHContextMenuView *)menuView didSelectItemAtIndex:(NSInteger)selectedIndex forMenuAtPoint:(CGPoint)point
 {
     NSString* msg = nil;
     switch (selectedIndex) {

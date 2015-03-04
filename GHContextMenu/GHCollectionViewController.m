@@ -71,7 +71,7 @@
 
 #pragma mark - GHMenu methods
 
--(BOOL) shouldShowMenuAtPoint:(CGPoint)point
+- (BOOL)menuView:(GHContextMenuView *)menuView shouldShowMenuAtPoint:(CGPoint)point
 {
     NSIndexPath* indexPath = [self.collectionView indexPathForItemAtPoint:point];
     UICollectionViewCell* cell = [self.collectionView cellForItemAtIndexPath:indexPath];
@@ -79,12 +79,12 @@
     return cell != nil;
 }
 
-- (NSInteger) numberOfMenuItems
+-(NSInteger)numberOfMenuItemsForMenuView:(GHContextMenuView *)menuView
 {
     return 3;
 }
 
--(UIImage*) imageForItemAtIndex:(NSInteger)index
+- (UIImage *)menuView:(GHContextMenuView *)menuView imageForItemAtIndex:(NSInteger)index
 {
     NSString* imageName = nil;
     switch (index) {
@@ -110,7 +110,7 @@
     return [UIImage imageNamed:imageName];
 }
 
-- (NSString*)titleForItemAtIndex:(NSInteger)index
+-(NSString *)menuView:(GHContextMenuView *)menuView titleForItemAtIndex:(NSInteger)index
 {
     NSString* title = @"";
     switch (index) {
@@ -136,7 +136,7 @@
     return title;
 }
 
-- (void) didSelectItemAtIndex:(NSInteger)selectedIndex forMenuAtPoint:(CGPoint)point
+-(void)menuView:(GHContextMenuView *)menuView didSelectItemAtIndex:(NSInteger)selectedIndex forMenuAtPoint:(CGPoint)point
 {
     NSIndexPath* indexPath = [self.collectionView indexPathForItemAtPoint:point];
 
