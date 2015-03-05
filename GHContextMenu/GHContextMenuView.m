@@ -17,12 +17,12 @@
 #define RAD2DEG(x) ((x) * 180 / M_PI)
 #define DEGREES_TO_RADIANS(x) (M_PI * (x) / 180.0)
 
-NSInteger const GHMainItemSize = 44;
-NSInteger const GHMenuItemSize = 40;
-NSInteger const GHBorderWidth  = 2;
+NSInteger const GHMainItemSize = 50;
+NSInteger const GHMenuItemSize = 50;
+NSInteger const GHBorderWidth  = 0;
 
-CGFloat const   GHAnimationDuration = 0.2;
-CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
+CGFloat const   GHAnimationDuration = 0.25;
+CGFloat const   GHAnimationDelay = GHAnimationDuration / 4;
 
 
 @interface GHMenuItemLocation : NSObject
@@ -65,13 +65,15 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 
 @property (nonatomic) CGFloat cachedStartAngle;
 
+@property (nonatomic, weak) UIView *gestureRecognizerView;
+
 @end
 
 @implementation GHContextMenuView
 
 - (id)init
 {
-    self = [super initWithFrame:[[UIScreen mainScreen] applicationFrame]];
+    self = [super initWithFrame:UIScreen.mainScreen.bounds];
     if (self) {
         // Initialization code
         self.userInteractionEnabled = YES;
@@ -88,10 +90,10 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
         _titles = [NSMutableArray array];
         _itemLocations = [NSMutableArray array];
         _arcAngle = M_PI_2;
-        _radius = 90;
+        _radius = 70;
         
-        self.itemBGColor = (id)[UIColor colorWithWhite:0.4 alpha:0.5].CGColor;
-        self.itemBGHighlightedColor = (id)[UIColor redColor].CGColor;
+        self.itemBGColor = (id)[UIColor clearColor].CGColor;
+        self.itemBGHighlightedColor = (id)[UIColor clearColor].CGColor;
         
     }
     return self;
@@ -121,7 +123,7 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 
     if ([touches count] == 1) {
 
-        UITouch *touch = (UITouch *)[touches anyObject];
+        UITouch *touch = (UITouch *)touches.anyObject;
         CGPoint touchPoint = [touch locationInView:self];
 
         NSInteger menuItemIndex = [self indexOfClosestMatchAtPoint:touchPoint];
@@ -134,6 +136,8 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
         }
         self.prevIndex = menuItemIndex;
     }
+	
+	menuAtPoint = [self convertPoint:menuAtPoint toView:self.gestureRecognizerView];
 
     [self dismissWithSelectedIndexForMenuAtPoint: menuAtPoint];
 }
@@ -155,7 +159,7 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
     [self hideMenu];
 }
 
-- (void) longPressDetected:(UIGestureRecognizer*) gestureRecognizer
+- (void)longPressDetected:(UIGestureRecognizer*) gestureRecognizer
 {
     if (gestureRecognizer.state == UIGestureRecognizerStateBegan) {
         
@@ -184,8 +188,23 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
         [[UIApplication sharedApplication].keyWindow addSubview:self];
         if (self.menuAnchor == GHContextMenuAnchorContainingView) {
 			self.longPressLocation = CGPointMake(gestureRecognizer.view.frame.origin.x + (gestureRecognizer.view.frame.size.width / 2), gestureRecognizer.view.frame.origin.y + gestureRecognizer.view.layer.borderWidth);
-        } else {
-            self.longPressLocation = [gestureRecognizer locationInView:self];
+		} else {
+            CGPoint longPressLocation = [gestureRecognizer locationInView:self];
+			
+			if (longPressLocation.x - 110 <= 0) {
+				longPressLocation.x = 110;
+			} else if (longPressLocation.x + 100 >= self.frame.size.width) {
+				longPressLocation.x = self.frame.size.width - 110;
+			}
+			
+			if (longPressLocation.y - 100 <= 0) {
+				longPressLocation.y = 110;
+			} else if (longPressLocation.y + 100 >= self.frame.size.height) {
+				longPressLocation.y = self.frame.size.height - 100;
+			}
+			
+			
+			self.longPressLocation = longPressLocation;
         }
         [self showMenu];
     }
@@ -201,12 +220,14 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
     if((gestureRecognizer.state == UIGestureRecognizerStateEnded && self.menuActionType == GHContextMenuActionTypePan) || (gestureRecognizer.state == UIGestureRecognizerStateEnded && self.menuActionType == GHContextmenuActionTypePanAndTap && self.prevIndex >= 0)) {
         CGPoint menuAtPoint = [self convertPoint:self.longPressLocation toView:gestureRecognizer.view];
         [self dismissWithSelectedIndexForMenuAtPoint:menuAtPoint];
-    }
+	} else {
+		self.gestureRecognizerView = gestureRecognizer.view;
+	}
 }
 
 - (void) showMenu
 {
-    self.frame = [UIScreen mainScreen].bounds;
+    self.frame = UIScreen.mainScreen.bounds;
     self.isShowing = YES;
     [self animateMenu:YES];
     [self setNeedsDisplay];
@@ -229,24 +250,15 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 
 - (CALayer*) layerWithImage:(UIImage*) image
 {
-    CALayer *layer = [CALayer layer];
-    layer.bounds = CGRectMake(0, 0, GHMenuItemSize, GHMenuItemSize);
-    layer.position = CGPointMake(-1000, -1000);
-    layer.cornerRadius = GHMenuItemSize/2;
-    layer.borderColor = [UIColor whiteColor].CGColor;
-    layer.borderWidth = GHBorderWidth;
-    layer.shadowColor = [UIColor blackColor].CGColor;
-    layer.shadowOffset = CGSizeMake(0, -1);
-    layer.backgroundColor = (__bridge CGColorRef)self.itemBGColor;
-    
     CALayer* imageLayer = [CALayer layer];
     [imageLayer setContentsGravity:kCAGravityResizeAspect];
+	imageLayer.contentsScale = [UIScreen mainScreen].scale;
     imageLayer.contents = (id) image.CGImage;
-    imageLayer.bounds = CGRectMake(0, 0, GHMenuItemSize*2/3, GHMenuItemSize*2/3);
-    imageLayer.position = CGPointMake(GHMenuItemSize/2, GHMenuItemSize/2);
-    [layer addSublayer:imageLayer];
-    
-    return layer;
+    imageLayer.bounds = CGRectMake(0, 0, GHMenuItemSize, GHMenuItemSize);
+    imageLayer.position = CGPointMake(GHMenuItemSize / 2, GHMenuItemSize / 2);
+	imageLayer.rasterizationScale = [UIScreen mainScreen].scale;
+
+	return imageLayer;
 }
 
 -(CALayer *)layerWithTitle:(NSString *)title
@@ -304,19 +316,21 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 				[self.titles addObject:title];
 			}
         }
+		
+		self.layer.shouldRasterize = YES;
+		self.layer.rasterizationScale = UIScreen.mainScreen.scale;
     }
 }
 
-- (void) layoutMenuItems
+- (void)layoutMenuItems
 {
     [self.itemLocations removeAllObjects];
     
-    self.angleBetweenItems = M_PI / 5;
+    self.angleBetweenItems = M_PI / 2.5;
     self.arcAngle = MAX(self.menuItems.count - 1, 0) * _angleBetweenItems;
     
-    self.cachedStartAngle = self.currentStartAngle;
-    NSLog(@"START ANGLE: %0.9f", self.cachedStartAngle);
-    
+	self.cachedStartAngle =  -(_arcAngle / 2) - M_PI_2;
+	
     for(int i = 0; i < self.menuItems.count; i++) {
         GHMenuItemLocation *location = [self locationForItemAtIndex:i];
         [self.itemLocations addObject:location];
@@ -426,7 +440,7 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
     return itemAngle;
 }
 
-# pragma mark - helper methiods
+# pragma mark - helper methods
 
 - (CGFloat) calculateRadius
 {
@@ -443,7 +457,7 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
     return radius;
 }
 
-- (CGFloat) angleBeweenStartinPoint:(CGPoint) startingPoint endingPoint:(CGPoint) endingPoint
+- (CGFloat)angleBeweenStartinPoint:(CGPoint) startingPoint endingPoint:(CGPoint) endingPoint
 {
     CGPoint originPoint = CGPointMake(endingPoint.x - startingPoint.x, endingPoint.y - startingPoint.y);
     float bearingRadians = atan2f(originPoint.y, originPoint.x);
@@ -455,7 +469,7 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 
 # pragma mark - animation and selection
 
--  (void) highlightMenuItemForPoint
+-  (void)highlightMenuItemForPoint
 {
     if (self.isShowing && self.isPanning) {
         
@@ -463,7 +477,7 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
         NSInteger closeToIndex = -1;
         for (int i = 0; i < self.menuItems.count; i++) {
             GHMenuItemLocation* itemLocation = [self.itemLocations objectAtIndex:i];
-            if (fabs(itemLocation.angle - angle) < self.angleBetweenItems/2) {
+            if (fabs(itemLocation.angle - angle) < self.angleBetweenItems / 2) {
                 closeToIndex = i;
                 break;
             }
@@ -474,8 +488,8 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
             GHMenuItemLocation* itemLocation = [self.itemLocations objectAtIndex:closeToIndex];
 
             CGFloat distanceFromCenter = sqrt(pow(self.currentLocation.x - self.longPressLocation.x, 2)+ pow(self.currentLocation.y-self.longPressLocation.y, 2));
-            
-            CGFloat toleranceDistance = (self.radius - GHMainItemSize/(2*sqrt(2)) - GHMenuItemSize/(2*sqrt(2)) )/2;
+			
+            CGFloat toleranceDistance = self.radius / 3;
             
             CGFloat distanceFromItem = fabsf(distanceFromCenter - self.radius) - GHMenuItemSize/(2*sqrt(2)) ;
             
@@ -488,8 +502,8 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
                 layer.backgroundColor = (__bridge CGColorRef)(self.itemBGHighlightedColor);
                 
                 CGFloat distanceFromItemBorder = fabs(distanceFromItem);
-                
-                CGFloat scaleFactor = 1 + 0.5 * (1 - distanceFromItemBorder / toleranceDistance);
+
+				CGFloat scaleFactor = 1.25;
                 scaleFactor = MAX(scaleFactor, 1.0);
                 
                 // Scale
@@ -498,7 +512,7 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
                 CGFloat xtrans = cosf(itemLocation.angle);
                 CGFloat ytrans = sinf(itemLocation.angle);
                 
-                CATransform3D transLate = CATransform3DTranslate(scaleTransForm, 10*scaleFactor*xtrans, 10*scaleFactor*ytrans, 0);
+                CATransform3D transLate = CATransform3DTranslate(scaleTransForm, 5 * scaleFactor * xtrans, 5 * scaleFactor * ytrans, 0);
                 layer.transform = transLate;
 
 				if (self.titleItems.count) {
@@ -516,7 +530,7 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
             } else if(self.prevIndex >= 0) {
                 [self resetPreviousSelection];
             }
-        }else {
+        } else {
             [self resetPreviousSelection];
         }
     }
@@ -543,7 +557,7 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
     }
 }
 
-- (void) animateMenu:(BOOL) isShowing
+- (void)animateMenu:(BOOL)isShowing
 {
     if (isShowing) {
         [self layoutMenuItems];
@@ -556,9 +570,9 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
     self.layer.backgroundColor = (isShowing ?  visibleColour : hiddenColour);
     
     [_menuItems enumerateObjectsUsingBlock:^(CALayer *layer, NSUInteger index, BOOL *stop) {
-        layer.opacity = 0;
+		layer.opacity = isShowing ? 0 : 1;
         CGPoint fromPosition = self.longPressLocation;
-        
+		
         GHMenuItemLocation* location = [self.itemLocations objectAtIndex:index];
         CGPoint toPosition = location.position;
         
@@ -619,9 +633,8 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 			titleLayer.opacity = 0.0f;
 		}
 		
-        layer.backgroundColor = (__bridge CGColorRef)(self.itemBGColor);
+		layer.transform = CATransform3DIdentity;
         layer.opacity = 0.0f;
-        layer.transform = CATransform3DIdentity;
         [CATransaction commit];
     }
 }
@@ -630,7 +643,7 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration/5;
 {
     CGContextRef ctx= UIGraphicsGetCurrentContext();
     CGContextSaveGState(ctx);
-    CGContextSetLineWidth(ctx,GHBorderWidth/2);
+    CGContextSetLineWidth(ctx,1);
     CGContextSetRGBStrokeColor(ctx,0.8,0.8,0.8,1.0);
     CGContextAddArc(ctx,locationOfTouch.x,locationOfTouch.y,GHMainItemSize/2,0.0,M_PI*2,YES);
     CGContextStrokePath(ctx);
