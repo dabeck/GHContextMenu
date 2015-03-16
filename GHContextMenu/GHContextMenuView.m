@@ -150,13 +150,21 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration / 4;
 // Split this out of the longPressDetected so that we can reuse it with touchesBegan (above)
 -(void)dismissWithSelectedIndexForMenuAtPoint:(CGPoint)point
 {
-    
+
     if(self.delegate && [self.delegate respondsToSelector:@selector(menuView:didSelectItemAtIndex:forMenuAtPoint:)] && self.prevIndex >= 0){
         [self.delegate menuView:self didSelectItemAtIndex:self.prevIndex forMenuAtPoint:point];
+		
+		CALayer *item = (CALayer *)self.menuItems[(NSUInteger)self.prevIndex];
+		
+		[self attachPopUpAnimationToLayer:item completion:^{
+			[self hideMenu];
+		}];
+		
         self.prevIndex = -1;
-    }
+	} else {
+		[self hideMenu];
+	}
 
-    [self hideMenu];
 }
 
 - (void)longPressDetected:(UIGestureRecognizer*) gestureRecognizer
@@ -637,6 +645,44 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration / 4;
         layer.opacity = 0.0f;
         [CATransaction commit];
     }
+}
+
+- (void) attachPopUpAnimationToLayer:(CALayer *)layer completion:(void (^)(void))completion
+{
+	CAKeyframeAnimation *animation = [CAKeyframeAnimation
+									  animationWithKeyPath:@"transform"];
+	
+	CATransform3D scale1 = CATransform3DMakeScale(0.5, 0.5, 1);
+	CATransform3D scale2 = CATransform3DMakeScale(1.2, 1.2, 1);
+	CATransform3D scale3 = CATransform3DMakeScale(0.9, 0.9, 1);
+	CATransform3D scale4 = CATransform3DMakeScale(1.0, 1.0, 1);
+	
+	NSArray *frameValues = [NSArray arrayWithObjects:
+							[NSValue valueWithCATransform3D:scale1],
+							[NSValue valueWithCATransform3D:scale2],
+							[NSValue valueWithCATransform3D:scale3],
+							[NSValue valueWithCATransform3D:scale4],
+							nil];
+	[animation setValues:frameValues];
+	
+	NSArray *frameTimes = [NSArray arrayWithObjects:
+						   [NSNumber numberWithFloat:0.0],
+						   [NSNumber numberWithFloat:0.5],
+						   [NSNumber numberWithFloat:0.9],
+						   [NSNumber numberWithFloat:1.0],
+						   nil];
+	[animation setKeyTimes:frameTimes];
+	
+	animation.fillMode = kCAFillModeForwards;
+	animation.removedOnCompletion = YES;
+	animation.duration = .25;
+	
+	[CATransaction begin]; {
+		[CATransaction setCompletionBlock:completion];
+		[layer addAnimation:animation forKey:@"popup"];
+	}
+	[CATransaction commit];
+	
 }
 
 - (void)drawCircle:(CGPoint)locationOfTouch
