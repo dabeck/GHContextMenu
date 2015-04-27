@@ -22,7 +22,7 @@ NSInteger const GHMenuItemSize = 50;
 NSInteger const GHBorderWidth  = 0;
 
 CGFloat const   GHAnimationDuration = 0.25;
-CGFloat const   GHAnimationDelay = GHAnimationDuration / 4;
+CGFloat const   GHAnimationDelay = GHAnimationDuration / 3;
 
 
 @interface GHMenuItemLocation : NSObject
@@ -195,7 +195,8 @@ CGFloat const   GHAnimationDelay = GHAnimationDuration / 4;
         
         [[UIApplication sharedApplication].keyWindow addSubview:self];
         if (self.menuAnchor == GHContextMenuAnchorContainingView) {
-			self.longPressLocation = CGPointMake(gestureRecognizer.view.frame.origin.x + (gestureRecognizer.view.frame.size.width / 2), gestureRecognizer.view.frame.origin.y + gestureRecognizer.view.layer.borderWidth);
+			self.longPressLocation = [UIApplication sharedApplication].keyWindow.center;
+			//CGPointMake(gestureRecognizer.view.frame.origin.x + (gestureRecognizer.view.frame.size.width / 2), gestureRecognizer.view.frame.origin.y + (gestureRecognizer.view.frame.size.height / 2));
 		} else {
             CGPoint longPressLocation = [gestureRecognizer locationInView:self];
 			
